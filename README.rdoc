@@ -1,3 +1,3 @@
-= Integración con Mantis
+= redmine_integracion_mantis
 
-Plugin de Redmine para establecer la integración entre CSMe y Mantis.
+Description goes here
