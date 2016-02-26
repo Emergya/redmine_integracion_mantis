@@ -13,8 +13,7 @@ module IM
         require 'net/http'
         require 'uri'
 
-        after_update :notification_note
-        after_update :notification_change_status
+        after_update :notification_get_parameters
       end
     end
 
@@ -22,42 +21,39 @@ module IM
     end
 
     module InstanceMethods
-      # Metodo que envia a Mantis la nota al actualizar una petición.
-    	def notification_note
-        # =============================================================================
-        # [PENDIENTE por definir parametros que se van a enviar a Mantis pero funciona]
-        # =============================================================================
+      # Metodo que envia a Mantis la notificacion de cambio de estado y/o la nota al actualizar una petición.
+      def notification_get_parameters
+        # URL que usará para llamar a la API de Mantis
+        url = self.status_id_changed? ? Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses] : Setting.plugin_redmine_integracion_mantis[:mantis_url_notes]
+        
+        # Se obtiene el valor de la ID de Mantis
+        sds_mantis = self.custom_values.where('custom_field_id = ?', Setting.plugin_redmine_integracion_mantis[:mantis_field_id]).first.value
+        
+        # Cambiamos en la URL {issueId} por el valor del Id de Mantis
+        url_with_id_mantis = url.gsub('{issueId}', sds_mantis)
 
-        # parameters = {"issue[project_id]" => '3', "issue[subject]" => 'EJEMPLO Creo3', "issue[tracker_id]" => '2', "issue[status_id]" => '13', "issue[priority_id]" => '1'}
-        # parameters['key'] = "2d70d8e0f1837048350cd88b12c6614d2f26f404"
+        # API Key que se enviará en cualquier caso.
+        parameters = {}
 
-        # url = Setting.plugin_redmine_integracion_mantis[:mantis_url_notes]
+        parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
+          
+          # Comprobamos si el estado de la petición ha cambiado
+          if self.status_id_changed?
+            req_type = "put"
+            status = IssueStatus.find self.status_id
+            parameters["data"] = { "status" => status.name, "note" => { "note" => self.notes } }
+          else # Si no ha cambiado el estado, unicamente enviaremos la nota
+            req_type = "post"
+            parameters["data"] = { "note" => self.notes }
+          end
 
-        # self.send_to_mantis(url, parameters)
-    	end
-
-      # Metodo que envia a mantis el aviso del cambio de estado de una petición.
-      def notification_change_status
-        # =============================================================================
-        # [PENDIENTE por definir parametros que se van a enviar a Mantis pero funciona]
-        # =============================================================================
-
-        # if self.status_id_changed?
-        #   status = IssueStatus.find self.status_id
-        #   if Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses_notification].include? status.id
-        #     parameters = { "status[name]" => status.name }
-        #     parameters['key'] = "2d70d8e0f1837048350cd88b12c6614d2f26f404"
-
-        #     url = Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses]
-            
-        #     # self.send_to_mantis(url, parameters)
-        #   end
-        # end
+          # Llamada al metodo que enviará la información a Mantis
+          self.send_to_mantis(url, parameters, req_type)
       end
 
-      def send_to_mantis(url, parameters)
+      def send_to_mantis(url, parameters, type)
         uri = URI.parse(url)
-        req = Net::HTTP::Post.new(uri.path)
+        req = type == "post" ? Net::HTTP::Post.new(uri.path) : Net::HTTP::Put.new(uri.path)
         req.set_form_data(parameters)
 
         res = Net::HTTP.start(uri.hostname, uri.port) do |http|
