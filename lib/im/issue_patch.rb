@@ -52,13 +52,22 @@ module IM
       end
 
       def send_to_mantis(url, parameters, type)
-        uri = URI.parse(url)
+        # uri = URI.parse(url)
+        uri = URI.parse("http://demo4349529.mockable.io/prueba")
         req = type == "post" ? Net::HTTP::Post.new(uri.path) : Net::HTTP::Put.new(uri.path)
         req.set_form_data(parameters)
 
         res = Net::HTTP.start(uri.hostname, uri.port) do |http|
           http.request(req)
         end
+
+        self.show_flash_error_mantis(JSON.parse(res.body)) if res.code.to_i > 400
+      end
+
+      def show_flash_error_mantis(params)
+        errors.add :base, params["msg"]
+
+        raise ActiveRecord::Rollback
       end
     end
 
