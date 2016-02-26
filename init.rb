@@ -1,4 +1,5 @@
 require 'im/issue_patch'
+require 'im/issues_controller_patch'
 
 Redmine::Plugin.register :redmine_integracion_mantis do
   name 'Redmine Integracion Mantis plugin'
