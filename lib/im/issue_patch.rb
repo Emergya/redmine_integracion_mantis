@@ -28,15 +28,16 @@ module IM
         
         # Se obtiene el valor de la ID de Mantis
         sds_mantis = self.custom_values.where('custom_field_id = ?', Setting.plugin_redmine_integracion_mantis[:mantis_field_id]).first.value
-        
-        # Cambiamos en la URL {issueId} por el valor del Id de Mantis
-        url_with_id_mantis = url.gsub('{issueId}', sds_mantis)
 
-        # API Key que se enviará en cualquier caso.
-        parameters = {}
+        if sds_mantis.present?
+          # Cambiamos en la URL {issueId} por el valor del Id de Mantis
+          url_with_id_mantis = url.gsub('{issueId}', sds_mantis)
 
-        parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
-          
+          # API Key que se enviará en cualquier caso.
+          parameters = {}
+
+          parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
+            
           # Comprobamos si el estado de la petición ha cambiado
           if self.status_id_changed?
             req_type = "put"
@@ -48,7 +49,8 @@ module IM
           end
 
           # Llamada al metodo que enviará la información a Mantis
-          self.send_to_mantis(url, parameters, req_type)
+          self.send_to_mantis(url_with_id_mantis, parameters, req_type)
+        end
       end
 
       def send_to_mantis(url, parameters, type)
