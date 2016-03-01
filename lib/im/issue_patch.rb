@@ -52,8 +52,7 @@ module IM
       end
 
       def send_to_mantis(url, parameters, type)
-        # uri = URI.parse(url)
-        uri = URI.parse("http://demo4349529.mockable.io/prueba")
+        uri = URI.parse(url)
         req = type == "post" ? Net::HTTP::Post.new(uri.path) : Net::HTTP::Put.new(uri.path)
         req.set_form_data(parameters)
 
@@ -65,7 +64,7 @@ module IM
       end
 
       def show_flash_error_mantis(params)
-        errors.add :base, params["msg"]
+        errors.add :base, params["message"]
 
         raise ActiveRecord::Rollback
       end
