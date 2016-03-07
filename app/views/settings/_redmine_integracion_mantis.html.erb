@@ -12,7 +12,7 @@
 
 		<div style='width:250px; float: left;'>ID de Mantis:</div> &nbsp;
 		<%= select_tag 'settings[mantis_field_id]',
-			options_from_collection_for_select(CustomField.all, :id, :name, @settings['mantis_field_id']),
+			options_from_collection_for_select(CustomField.where("type = ?", 'IssueCustomField'), :id, :name, @settings['mantis_field_id']),
 			:include_blank => true
 		%>
 
