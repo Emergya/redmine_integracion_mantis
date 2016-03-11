@@ -35,11 +35,13 @@ module IM
 
           # API Key que se enviará en cualquier caso.
           parameters = {}
-
           parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
-            
+          
+          # Se recoge los cambios de estados que se deben de tener en cuenta para la notificación a Mantis
+          statuses_to_send = Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses_notification]
+
           # Comprobamos si el estado de la petición ha cambiado
-          if self.status_id_changed?
+          if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
             req_type = "put"
             status = IssueStatus.find self.status_id
             parameters["data"] = { "status" => status.name, "note" => { "note" => self.notes } }
@@ -49,7 +51,7 @@ module IM
           end
 
           # Llamada al metodo que enviará la información a Mantis
-          self.send_to_mantis(url_with_id_mantis, parameters, req_type)
+          # self.send_to_mantis(url_with_id_mantis, parameters, req_type)
         end
       end
 
