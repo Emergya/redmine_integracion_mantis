@@ -51,8 +51,6 @@ api.issue do
 
   api.array :journals do
     @journals.each do |journal|
-      logger.info "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-      logger.info journal.inspect
       api.journal :id => journal.id do
         api.user(:id => journal.user_id, :name => journal.user.name) unless journal.user.nil?
         api.notes journal.notes
