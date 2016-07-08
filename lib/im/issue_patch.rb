@@ -44,10 +44,10 @@ module IM
           if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
             req_type = "put"
             status = IssueStatus.find self.status_id
-            parameters["data"] = { "status" => status.name, "note" => { "note" => self.notes } }
+            parameters["data"] = { "status" => status.name, "note" => { "note" => self.notes, "private_note" => self.closed? ? false : true } }
           else # Si no ha cambiado el estado, unicamente enviaremos la nota
             req_type = "post"
-            parameters["data"] = { "note" => self.notes }
+            parameters["data"] = { "note" => self.notes, "private_note" => self.closed? ? false : true }
           end
 
           # Llamada al metodo que enviará la información a Mantis
