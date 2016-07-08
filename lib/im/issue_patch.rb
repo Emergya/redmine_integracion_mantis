@@ -48,7 +48,7 @@ module IM
           else # Si no ha cambiado el estado, unicamente enviaremos la nota
             req_type = "post"
             parameters["data"] = { "note" => self.notes, "private_note" => self.closed? ? false : true }
-          end
+          end 
 
           # Llamada al metodo que enviará la información a Mantis
           # self.send_to_mantis(url_with_id_mantis, parameters, req_type)
