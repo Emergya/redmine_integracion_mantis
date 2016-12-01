@@ -24,15 +24,12 @@ module IM
       # Metodo que envia a Mantis la notificacion de cambio de estado y/o la nota al actualizar una petición.
       def notification_get_parameters
         # URL que usará para llamar a la API de Mantis
-        url = self.status_id_changed? ? Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses] : Setting.plugin_redmine_integracion_mantis[:mantis_url_notes]
+        url = Setting.plugin_redmine_integracion_mantis[:mantis_url]
         
         # Se obtiene el valor de la ID de Mantis
         sds_mantis = self.custom_values.where('custom_field_id = ?', Setting.plugin_redmine_integracion_mantis[:mantis_field_id]).first.value
 
         if sds_mantis.present?
-          # Cambiamos en la URL {issueId} por el valor del Id de Mantis
-          url_with_id_mantis = url.gsub('{issueId}', sds_mantis)
-
           # API Key que se enviará en cualquier caso.
           parameters = {}
           parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
@@ -44,10 +41,10 @@ module IM
           if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
             req_type = "put"
             status = IssueStatus.find self.status_id
-            parameters["data"] = { "status" => status.name, "note" => { "note" => self.notes, "private_note" => self.closed? ? false : true } }
+            parameters["data"] = { "bug_id" => sds_mantis, "estado" => status.name, "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si'}
           else # Si no ha cambiado el estado, unicamente enviaremos la nota
             req_type = "post"
-            parameters["data"] = { "note" => self.notes, "private_note" => self.closed? ? false : true }
+            parameters["data"] = { "bug_id" => sds_mantis, "estado" => '', "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si' }
           end 
 
           # Llamada al metodo que enviará la información a Mantis

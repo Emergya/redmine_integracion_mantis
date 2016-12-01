@@ -20,19 +20,9 @@
 <br>
 
 <fieldset>
-	<legend><b>Notas</b></legend>
-	<p style="padding: 0px;"> Indique en la URL añadiendo <b><i>{issueId}</i></b> donde se sustituira por la ID correspondiente a Mantis.</p>
-		<div style='width:250px; float: left;'>URL para enviar las notas de las peticiones:</div> &nbsp;
-		<%= text_field_tag 'settings[mantis_url_notes]', @settings['mantis_url_notes'], :size => 50 %>
-
-</fieldset>
-<br>
-
-<fieldset>
-	<legend><b>Estados</b></legend>
-<p style="padding: 0px;"> Indique en la URL añadiendo <b><i>{issueId}</i></b> donde se sustituira por la ID correspondiente a Mantis.</p>
-		<div style='width:250px; float: left;'>URL para los cambios de estados:</div> &nbsp;
-		<%= text_field_tag 'settings[mantis_url_statuses]', @settings['mantis_url_statuses'], :size => 50 %>
+	<legend><b>Configuración</b></legend>
+		<div style='width:250px; float: left;'>Indique en la URL correspondiente a Mantis:</div> &nbsp;
+		<%= text_field_tag 'settings[mantis_url]', @settings['mantis_url'], :size => 50 %>
 		<br><br>
 
 		<div style='width:250px; float: left;'>Estados que activaran la notificación a Mantis:</div> &nbsp;
