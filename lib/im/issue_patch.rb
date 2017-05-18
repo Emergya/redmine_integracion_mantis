@@ -48,7 +48,7 @@ module IM
           end 
 
           # Llamada al metodo que enviará la información a Mantis
-          # self.send_to_mantis(url_with_id_mantis, parameters, req_type)
+          self.send_to_mantis(url_with_id_mantis, parameters, req_type)
         end
       end
 
