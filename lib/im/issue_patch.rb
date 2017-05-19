@@ -32,30 +32,41 @@ module IM
         if sds_mantis.present?
           # API Key que se enviará en cualquier caso.
           parameters = {}
-          parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
+          # parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
           
           # Se recoge los cambios de estados que se deben de tener en cuenta para la notificación a Mantis
           statuses_to_send = Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses_notification]
 
           # Comprobamos si el estado de la petición ha cambiado
           if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
-            req_type = "put"
+            req_type = "post"
             status = IssueStatus.find self.status_id
-            parameters["data"] = { "bug_id" => sds_mantis, "estado" => status.name, "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si'}
+            mapped_status = case status.name
+              when 'Falta de información'
+                'Devuelta'
+              when 'Resuelta'
+                'Cerrada'
+              when 'Devuelta'
+                'Rechazada'
+              else
+                status.name
+            end
+            parameters = { "bug_id" => sds_mantis, "estado" => mapped_status, "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si'}
           else # Si no ha cambiado el estado, unicamente enviaremos la nota
             req_type = "post"
-            parameters["data"] = { "bug_id" => sds_mantis, "estado" => '', "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si' }
+            parameters = { "bug_id" => sds_mantis, "estado" => '""', "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si' }
           end 
 
           # Llamada al metodo que enviará la información a Mantis
-          self.send_to_mantis(url_with_id_mantis, parameters, req_type)
+          self.send_to_mantis(url, parameters, req_type)
         end
       end
 
       def send_to_mantis(url, parameters, type)
         uri = URI.parse(url)
-        req = type == "post" ? Net::HTTP::Post.new(uri.path) : Net::HTTP::Put.new(uri.path)
-        req.set_form_data(parameters)
+        # req = type == "post" ? Net::HTTP::Post.new(uri.path) : Net::HTTP::Put.new(uri.path)
+        # req.set_form_data(parameters)
+        req = Net::HTTP::Get.new(url+"?"+parameters.to_query)
 
         res = Net::HTTP.start(uri.hostname, uri.port) do |http|
           http.request(req)
