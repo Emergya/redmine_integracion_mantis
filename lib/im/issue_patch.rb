@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require_dependency 'issue'
 require 'dispatcher' unless Rails::VERSION::MAJOR >= 3
 
