@@ -29,3 +29,11 @@
 		<%= select_tag 'settings[mantis_url_statuses_notification]',
 			options_from_collection_for_select(IssueStatus.uniq, :id, :name, @settings['mantis_url_statuses_notification']), {:multiple => true, :style => "height: 85px"} %>
 </fieldset>
+
+<fieldset>
+	<div style='width:250px; float: left;'>Usuario para migración:</div> &nbsp;
+		<%= select_tag 'settings[migration_user_id]',
+			options_from_collection_for_select(User.all, :id, :name, @settings['migration_user_id']),
+			:include_blank => true
+		%>
+</fieldset>

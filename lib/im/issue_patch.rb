@@ -15,6 +15,7 @@ module IM
         require 'uri'
 
         after_update :notification_get_parameters
+        alias_method_chain :send_notification, :integracion_mantis
       end
     end
 
@@ -26,40 +27,45 @@ module IM
       def notification_get_parameters
         # URL que usará para llamar a la API de Mantis
         url = Setting.plugin_redmine_integracion_mantis[:mantis_url]
-        
+        # Id del usuario para la migración
+        migration_user_id = Setting.plugin_redmine_integracion_mantis[:migration_user_id]
+
         # Se obtiene el valor de la ID de Mantis
         sds_mantis = self.custom_values.where('custom_field_id = ?', Setting.plugin_redmine_integracion_mantis[:mantis_field_id]).first.value
 
-        if sds_mantis.present?
-          # API Key que se enviará en cualquier caso.
-          parameters = {}
-          # parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
-          
-          # Se recoge los cambios de estados que se deben de tener en cuenta para la notificación a Mantis
-          statuses_to_send = Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses_notification]
+        # Solo ejecutamos la integración si no se ha configurado un usuario de migración o si el usuario actual es distinto a este
+        if migration_user_id.empty? or migration_user_id != User.current.id.to_s
+          if sds_mantis.present?
+            # API Key que se enviará en cualquier caso.
+            parameters = {}
+            # parameters['apiAccessKey'] = Setting.plugin_redmine_integracion_mantis[:mantis_api_key]
+            
+            # Se recoge los cambios de estados que se deben de tener en cuenta para la notificación a Mantis
+            statuses_to_send = Setting.plugin_redmine_integracion_mantis[:mantis_url_statuses_notification]
 
-          # Comprobamos si el estado de la petición ha cambiado
-          if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
-            req_type = "post"
-            status = IssueStatus.find self.status_id
-            mapped_status = case status.name
-              when 'Falta de información'
-                'Devuelta'
-              when 'Resuelta'
-                'Cerrada'
-              when 'Devuelta'
-                'Rechazada'
-              else
-                status.name
-            end
-            parameters = { "bug_id" => sds_mantis, "estado" => mapped_status, "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si'}
-          else # Si no ha cambiado el estado, unicamente enviaremos la nota
-            req_type = "post"
-            parameters = { "bug_id" => sds_mantis, "estado" => '""', "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si' }
-          end 
+            # Comprobamos si el estado de la petición ha cambiado
+            if self.status_id_changed? && statuses_to_send.include?(self.status_id.to_s)
+              req_type = "post"
+              status = IssueStatus.find self.status_id
+              mapped_status = case status.name
+                when 'Falta de información'
+                  'Rechazada'
+                when 'Resuelta'
+                  'Cerrada'
+                when 'Devuelta'
+                  'Rechazada'
+                else
+                  status.name
+              end
+              parameters = { "bug_id" => sds_mantis, "estado" => mapped_status, "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si'}
+            else # Si no ha cambiado el estado, unicamente enviaremos la nota
+              req_type = "post"
+              parameters = { "bug_id" => sds_mantis, "estado" => '""', "observaciones" => self.notes, "visible" => self.private_notes ? 'no' : 'si' }
+            end 
 
-          # Llamada al metodo que enviará la información a Mantis
-          self.send_to_mantis(url, parameters, req_type)
+            # Llamada al metodo que enviará la información a Mantis
+            self.send_to_mantis(url, parameters, req_type)
+          end
         end
       end
 
@@ -80,6 +86,15 @@ module IM
         errors.add :base, params["message"]
 
         raise ActiveRecord::Rollback
+      end
+
+      def send_notification_with_integracion_mantis
+        # Id del usuario para la migración
+        migration_user_id = Setting.plugin_redmine_integracion_mantis[:migration_user_id]
+
+        if migration_user_id.empty? or migration_user_id != User.current.id.to_s
+          send_notification_without_integracion_mantis
+        end
       end
     end
 
